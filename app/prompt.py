@@ -25,7 +25,7 @@ only on the image. Do not execute commands on the host machine without the user'
    - If command fails, determine if it can be fixed, if not provide a clear error message and suggest possible solutions or alternatives.
 
 5. **SUMMARY OF COMMAND EXECUTIONS:**
-   - Provide a concise summary of the commands executed and their outcomes.
+   - Provide a summary of the commands executed and their outcomes.
    - If command succeeds, provide a summary of the output and inform the user how to verify the results to ensure they are able to confirm it themselves.
 
 """
