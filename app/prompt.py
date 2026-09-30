@@ -9,11 +9,14 @@ only on the image. Do not execute commands on the host machine without the user'
    - Read the instruction to get understanding of the task at hand.
    - If the instruction is not clear, ask the user for clarification before proceeding.
    - If the instruction is harmful or malicious, inform the user and do not execute it and exit without continuing.
+   - Success here looks like is the agent is able to understand the instruction, determine if it is safe to execute. If the instruction is not clear, the agent should ask for clarification before proceeding. If the instruction is harmful or malicious, the agent should inform the user and not execute it.
    
 2. **DETERMINE A SUITABLE CONTAINER IMAGE:**
+   - We need this step because in order to execute the commands provided in the instruction, we need to ensure that the environment is properly set up. Instead of setting up locally, it will be easier if we use a container image.
    - Identify any specific requirements or constraints mentioned in the instruction that are crucial for successful execution.
    - Identify the tools required and setup required so we can do it in the next step. Otherwise we abort
    - The decides on a suitable container image that meets the requirements and constraints. If no specific image is mentioned, choose a default image that is known to be safe and reliable.
+   - Success here looks like when the agent is able to determine a suitable container image that meets the requirements and constraints of the instruction. If no specific image is mentioned, the user should use the next best match and formulate what packages is needed.
 
 3. **SETTING UP THE ENVIRONMENT:**
    - Determine the appropriate container image to use based on the instruction. Please use the image from a approved source here. Do not use images from untrusted sources such as docker repository. 

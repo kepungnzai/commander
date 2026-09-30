@@ -19,8 +19,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from google.adk.tools import ToolContext
 
-from app.tools.document_toolset import (
-    container_image_registry,
+from app.tools.container_toolset import (
+    container_image_finder_tool,
 )
 
 
@@ -47,7 +47,7 @@ async def test_analyze_document_reset_search(mock_tool_context):
     ) as mock_fetch:
         mock_fetch.return_value = []
 
-        res = await container_image_registry(
+        res = await container_image_finder_tool(
             tool_context=mock_tool_context,
             collection_id=collection_id,
             question="What is this?",

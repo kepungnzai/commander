@@ -442,6 +442,75 @@ wheels = [
 ]
 
 [[package]]
+name = "commander"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "aiohttp" },
+    { name = "beautifulsoup4" },
+    { name = "docker" },
+    { name = "google-adk" },
+    { name = "google-cloud-aiplatform", extra = ["adk", "agent-engines"] },
+    { name = "litellm" },
+    { name = "ollama" },
+    { name = "openai" },
+    { name = "opentelemetry-instrumentation-google-genai" },
+    { name = "pandas" },
+    { name = "pypdf" },
+    { name = "python-dotenv" },
+    { name = "reportlab" },
+    { name = "requests" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "agent-starter-pack" },
+    { name = "codespell" },
+    { name = "flask" },
+    { name = "google-adk", extra = ["eval"] },
+    { name = "mypy" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "ruff" },
+    { name = "types-pyyaml" },
+    { name = "types-requests" },
+    { name = "uvicorn" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "aiohttp", specifier = "==3.14.3" },
+    { name = "beautifulsoup4", specifier = "==4.14.3" },
+    { name = "docker", specifier = ">=7.2.0" },
+    { name = "google-adk", specifier = ">=1.28.0" },
+    { name = "google-cloud-aiplatform", extras = ["adk", "agent-engines"], specifier = ">=1.93.0" },
+    { name = "litellm", specifier = ">=1.82.6" },
+    { name = "ollama", specifier = ">=0.6.3" },
+    { name = "openai", specifier = ">=2.32.0" },
+    { name = "opentelemetry-instrumentation-google-genai", specifier = "==0.4b0" },
+    { name = "pandas", specifier = "==2.3.3" },
+    { name = "pypdf", specifier = "==6.15.0" },
+    { name = "python-dotenv", specifier = ">=1.0.1" },
+    { name = "reportlab", specifier = "==4.2.0" },
+    { name = "requests", specifier = "==2.32.4" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "agent-starter-pack", specifier = ">=0.15.4" },
+    { name = "codespell", specifier = ">=2.2.0" },
+    { name = "flask", specifier = ">=3.1.3" },
+    { name = "google-adk", extras = ["eval"], specifier = ">=1.28.0" },
+    { name = "mypy", specifier = ">=1.15.0" },
+    { name = "pytest", specifier = ">=8.3.5" },
+    { name = "pytest-asyncio", specifier = ">=0.26.0" },
+    { name = "ruff", specifier = ">=0.4.6" },
+    { name = "types-pyyaml", specifier = ">=6.0.12.20240917" },
+    { name = "types-requests", specifier = ">=2.32.0.20240914" },
+    { name = "uvicorn", specifier = ">=0.37.0" },
+]
+
+[[package]]
 name = "cookiecutter"
 version = "2.7.1"
 source = { registry = "https://pypi.org/simple" }
@@ -519,6 +588,20 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/fc/f8/98eea607f65de6527f8a2e8885fc8015d3e6f5775df186e443e0964a11c3/distro-1.9.0.tar.gz", hash = "sha256:2fa77c6fd8940f116ee1d6b94a2f90b13b5ea8d019b98bc8bafdcabcdd9bdbed", size = 60722, upload-time = "2023-12-24T09:54:32.31Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/12/b3/231ffd4ab1fc9d679809f356cebee130ac7daa00d6d6f3206dd4fd137e9e/distro-1.9.0-py3-none-any.whl", hash = "sha256:7bffd925d65168f85027d8da9af6bddab658135b840670a223589bc0c8ef02b2", size = 20277, upload-time = "2023-12-24T09:54:30.421Z" },
+]
+
+[[package]]
+name = "docker"
+version = "7.2.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pywin32", marker = "sys_platform == 'win32'" },
+    { name = "requests" },
+    { name = "urllib3" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/88/7f/731ff914b0255d3d065f45fd4e626d4b8c95dbcbaada049f337a6ac16410/docker-7.2.0.tar.gz", hash = "sha256:cebb93773d334f778e023a7ee352a8d6e13ab1bd3b863a4d4a59dec897df43ac", size = 118731, upload-time = "2026-07-09T14:53:46.39Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/75/23/529140fe1aab80fc6992f93a706deec709140a6397439139a054e1515c45/docker-7.2.0-py3-none-any.whl", hash = "sha256:a3f45fdeb9165e2d25d9a1d02ddf3bc70fb572cf5ebbf9b58558c22caf29b71f", size = 148775, upload-time = "2026-07-09T14:53:45.224Z" },
 ]
 
 [[package]]
@@ -1431,67 +1514,6 @@ wheels = [
 ]
 
 [[package]]
-name = "high-volume-document-analyzer"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "aiohttp" },
-    { name = "beautifulsoup4" },
-    { name = "google-adk" },
-    { name = "google-cloud-aiplatform", extra = ["adk", "agent-engines"] },
-    { name = "opentelemetry-instrumentation-google-genai" },
-    { name = "pandas" },
-    { name = "pypdf" },
-    { name = "python-dotenv" },
-    { name = "reportlab" },
-    { name = "requests" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "agent-starter-pack" },
-    { name = "codespell" },
-    { name = "flask" },
-    { name = "google-adk", extra = ["eval"] },
-    { name = "mypy" },
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-    { name = "ruff" },
-    { name = "types-pyyaml" },
-    { name = "types-requests" },
-    { name = "uvicorn" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "aiohttp", specifier = "==3.14.3" },
-    { name = "beautifulsoup4", specifier = "==4.14.3" },
-    { name = "google-adk", specifier = ">=1.28.0" },
-    { name = "google-cloud-aiplatform", extras = ["adk", "agent-engines"], specifier = ">=1.93.0" },
-    { name = "opentelemetry-instrumentation-google-genai", specifier = "==0.4b0" },
-    { name = "pandas", specifier = "==2.3.3" },
-    { name = "pypdf", specifier = "==6.15.0" },
-    { name = "python-dotenv", specifier = ">=1.0.1" },
-    { name = "reportlab", specifier = "==4.2.0" },
-    { name = "requests", specifier = "==2.32.4" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "agent-starter-pack", specifier = ">=0.15.4" },
-    { name = "codespell", specifier = ">=2.2.0" },
-    { name = "flask", specifier = ">=3.1.3" },
-    { name = "google-adk", extras = ["eval"], specifier = ">=1.28.0" },
-    { name = "mypy", specifier = ">=1.15.0" },
-    { name = "pytest", specifier = ">=8.3.5" },
-    { name = "pytest-asyncio", specifier = ">=0.26.0" },
-    { name = "ruff", specifier = ">=0.4.6" },
-    { name = "types-pyyaml", specifier = ">=6.0.12.20240917" },
-    { name = "types-requests", specifier = ">=2.32.0.20240914" },
-    { name = "uvicorn", specifier = ">=0.37.0" },
-]
-
-[[package]]
 name = "httpcore"
 version = "1.0.9"
 source = { registry = "https://pypi.org/simple" }
@@ -2149,6 +2171,19 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/c7/a8/379542d45a14f149444c5c4c4e7714707239ce9cc1de8c2803958889da14/numpy-2.4.4-pp311-pypy311_pp73-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:19710a9ca9992d7174e9c52f643d4272dcd1558c5f7af7f6f8190f633bd651a7", size = 15804253, upload-time = "2026-03-29T13:21:50.753Z" },
     { url = "https://files.pythonhosted.org/packages/a2/c8/f0a45426d6d21e7ea3310a15cf90c43a14d9232c31a837702dba437f3373/numpy-2.4.4-pp311-pypy311_pp73-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:9b2aec6af35c113b05695ebb5749a787acd63cafc83086a05771d1e1cd1e555f", size = 16753552, upload-time = "2026-03-29T13:21:54.344Z" },
     { url = "https://files.pythonhosted.org/packages/04/74/f4c001f4714c3ad9ce037e18cf2b9c64871a84951eaa0baf683a9ca9301c/numpy-2.4.4-pp311-pypy311_pp73-win_amd64.whl", hash = "sha256:f2cf083b324a467e1ab358c105f6cad5ea950f50524668a80c486ff1db24e119", size = 12509075, upload-time = "2026-03-29T13:21:57.644Z" },
+]
+
+[[package]]
+name = "ollama"
+version = "0.6.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "httpx" },
+    { name = "pydantic" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b8/97/eeafe65594e4f4b25e443e068ef7d83aa3105b023e12e1c408c38669fc07/ollama-0.6.3.tar.gz", hash = "sha256:41fc49a8095c4a75939c4c1f8582e4d0671692fb6eac2a5a7ede8c9872b67096", size = 56868, upload-time = "2026-09-29T01:26:51.906Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/4d/64/87505d9e006461233c21c8e66dc1ecee49c996090584b216abd0dd4a8322/ollama-0.6.3-py3-none-any.whl", hash = "sha256:6a20bc42c1a5f889295d7ec490d35e5132fc31f339561530f43a8abd4dbfe508", size = 16603, upload-time = "2026-09-29T01:26:50.451Z" },
 ]
 
 [[package]]

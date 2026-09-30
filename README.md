@@ -13,7 +13,6 @@ An AI-powered agent built with the [Google Agent Development Kit (ADK)](https://
 | **Interaction Type** | Workflow & Conversational |
 | **Complexity** | Advanced |
 | **Agent Type** | Single Agent (with Dual Gemini Role mapping) |
-| **Vertical** | Cross-Industry (Legal, Corporate, Financial, Operations) |
 | **Framework** | ADK |
 | **Model** | Gemini 2.5 Flash |
 
