@@ -1,9 +1,9 @@
-please run 'python -h'
+# Hello Test
 
-then run 
+Run these commands to verify the setup.
 
-git show remote origin 
-
-then run bash commmand 
-
-echo bye!
+```bash
+echo "hello from the container"
+uname -a
+python --version
+```

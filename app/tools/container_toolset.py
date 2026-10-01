@@ -1174,3 +1174,98 @@ async def run_container_command_tool(
         logging.error("run_container_command_tool failed", exc_info=True)
         return _error(f"{type(exc).__name__}: {exc}", task_id=task_id or None)
 
+
+import subprocess
+import uuid
+
+CLI = "docker"  # change to "podman" if you use podman
+
+# Only allow images from these sources (official Docker Hub images + a few registries)
+APPROVED_PREFIXES = (
+    "python", "node", "ubuntu", "debian", "alpine", "golang", "rust", "ruby", "openjdk",
+    "mcr.microsoft.com/", "gcr.io/", "public.ecr.aws/",
+)
+
+_state = {"container": None}
+
+
+def _tail(text: str, n: int = 4000) -> str:
+    return text[-n:] if len(text) > n else text
+
+
+def start_container(image: str) -> dict:
+    """Pull a container image and start a container from it. Call this ONCE, before running any commands.
+
+    Args:
+        image: Image name with tag, e.g. "python:3.12-slim" or "ubuntu:24.04".
+
+    Returns:
+        A dict with "status" and the container name, or an error message.
+    """
+    if not image.startswith(APPROVED_PREFIXES):
+        return {"status": "error", "error_message": f"Image '{image}' is not from an approved source. Approved: {APPROVED_PREFIXES}"}
+
+    try:
+        pull = subprocess.run([CLI, "pull", image], capture_output=True, text=True, timeout=900)
+        if pull.returncode != 0:
+            return {"status": "error", "error_message": _tail(pull.stderr)}
+
+        name = f"commander-{uuid.uuid4().hex[:8]}"
+        run = subprocess.run(
+            [CLI, "run", "-d", "--name", name, image, "sleep", "infinity"],
+            capture_output=True, text=True, timeout=120,
+        )
+        if run.returncode != 0:
+            return {"status": "error", "error_message": _tail(run.stderr)}
+
+        _state["container"] = name
+        return {"status": "success", "container": name, "image": image,
+                "message": "Container is running. Now use run_container_command."}
+    except Exception as e:
+        return {"status": "error", "error_message": str(e)}
+
+
+def run_container_command(command: str) -> dict:
+    """Run ONE shell command inside the running container (started with start_container).
+
+    Args:
+        command: The shell command, e.g. "pip install requests" or "python --version".
+
+    Returns:
+        A dict with "status", "exit_code", "stdout" and "stderr".
+    """
+    name = _state["container"]
+    if not name:
+        return {"status": "error", "error_message": "No container is running. Call start_container first."}
+
+    try:
+        p = subprocess.run(
+            [CLI, "exec", name, "sh", "-c", command],
+            capture_output=True, text=True, timeout=600,
+        )
+        return {
+            "status": "success" if p.returncode == 0 else "error",
+            "exit_code": p.returncode,
+            "stdout": _tail(p.stdout),
+            "stderr": _tail(p.stderr),
+        }
+    except subprocess.TimeoutExpired:
+        return {"status": "error", "error_message": "Command timed out after 600s."}
+    except Exception as e:
+        return {"status": "error", "error_message": str(e)}
+
+
+def stop_container() -> None:
+    """Cleanup helper called from agent.py (not exposed to the model)."""
+    name = _state["container"]
+    if name:
+        subprocess.run([CLI, "rm", "-f", name], capture_output=True)
+        _state["container"] = None
+
+def finish(summary: str) -> dict:
+    """Call this when ALL README commands have been run, to end the task.
+
+    Args:
+        summary: Short summary of what ran, the results, and how to verify them.
+    """
+    return {"status": "done", "summary": summary}

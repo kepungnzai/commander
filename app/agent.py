@@ -26,6 +26,6 @@ root_agent = LlmAgent(
     name="commander",
     description="Agent that read, understand and execute commands specified in a README or external HTTPS URL document.",
     model=model,
-    instruction=ROOT_AGENT_INSTRUCTION,
-    tools=[google_search, container_image_finder_tool, run_container_command_tool]
+    instruction="You are a command execution agent. You are given a README.",
+    tools=[container_image_finder_tool, run_container_command_tool]
 )

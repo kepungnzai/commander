@@ -1,130 +1,171 @@
-import asyncio
+import json
 import os
+import re
 import sys
 import urllib.request
 from pathlib import Path
 from urllib.parse import urlparse
 
+import litellm
 from dotenv import load_dotenv
-from google.adk.agents import LlmAgent
-from google.adk.models.lite_llm import LiteLlm
-from google.adk.runners import Runner
-from google.adk.sessions import InMemorySessionService
-from google.genai import types
 
-from app.prompt import ROOT_AGENT_INSTRUCTION
 from app.tools.container_toolset import (
-    container_image_finder_tool,
-    run_container_command_tool, 
-)
-
-from app.tools.file_toolset import (
-    read_file
+    start_container,
+    run_container_command,
+    stop_container,
 )
 
 load_dotenv()
 
-model = LiteLlm(
-    model="openai/empero-ai/Qwen3.8-2B-Distill-GGUF",
-    api_base=os.getenv("LLM_API_BASE", "http://localhost:8888/v1"),
-    api_key=os.getenv("LLM_API_KEY", "dummy"),
-    # Turn off "thinking" so the small model acts instead of narrating.
-    # Some servers ignore this; if so, use a non-thinking model variant.
-    extra_body={"chat_template_kwargs": {"enable_thinking": False}},
-    temperature=0.2,
-)
+MODEL = "openai/empero-ai/Qwen3.8-2B-Distill-GGUF"
+API_BASE = os.getenv("LLM_API_BASE", "http://localhost:8888/v1")
+API_KEY = os.getenv("LLM_API_KEY", "dummy")
+MAX_STEPS = 30
 
-root_agent = LlmAgent(
-    name="commander",
-    description="Agent that reads, understands and executes commands specified in a README or external HTTPS URL document.",
-    model=model,
-    instruction=ROOT_AGENT_INSTRUCTION,
-    tools=[container_image_finder_tool, run_container_command_tool, read_file],
-)
+litellm.suppress_debug_info = True
+litellm.set_verbose = False
 
-APP_NAME = "commander_app"
-USER_ID = "local_user"
-SESSION_ID = "session_1"
+DENYLIST = [
+    r"\brm\s+-rf\s+/(\s|$)",
+    r"\bmkfs\b",
+    r"\bdd\s+if=",
+    r":\(\)\s*\{",
+    r"(curl|wget)[^|]*\|\s*(sudo\s+)?(ba)?sh",
+    r"\bshutdown\b|\breboot\b",
+]
 
-def is_url(source: str) -> bool:
-    parsed = urlparse(source)
-    return parsed.scheme in ("http", "https") and bool(parsed.netloc)
+SYSTEM_PROMPT = """You are a command execution agent. You are given a README.
+Each turn you choose ONE action and reply with JSON only: {"action": ..., "argument": ...}
+
+Actions:
+- start_container: argument is an image name, e.g. python:3.12-slim. Must be the first action.
+- run_container_command: argument is ONE shell command to run in the container.
+- finish: argument is a short summary of what ran, the real results, and how to verify.
+
+Rules:
+- Pick an image that fits the README (python:3.12-slim, node:22-slim, ubuntu:24.04).
+- Run the README's commands in order, exactly as written. Install missing tools first
+  (e.g. apt-get update && apt-get install -y git).
+- Each command runs in a fresh shell, so chain directory changes with && on one line.
+- After each action you will receive the real result. Never invent results.
+- If a command fails, read the error and fix it, at most 2 retries.
+- If a command is harmful, do not run it; use finish and explain why.
+- When all commands are done, use finish.
+"""
+
+SCHEMA = {
+    "type": "object",
+    "properties": {
+        "action": {"type": "string",
+                   "enum": ["start_container", "run_container_command", "finish"]},
+        "argument": {"type": "string"},
+    },
+    "required": ["action", "argument"],
+    "additionalProperties": False,
+}
+
+
+def is_url(s: str) -> bool:
+    p = urlparse(s)
+    return p.scheme in ("http", "https") and bool(p.netloc)
 
 
 def load_document(source: str) -> str:
-    """Return the text of a README, from a URL or a local file path."""
     if is_url(source):
         req = urllib.request.Request(source, headers={"User-Agent": "commander-agent"})
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            return resp.read().decode("utf-8", errors="replace")
-
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return r.read().decode("utf-8", errors="replace")
     path = Path(source).expanduser()
     if not path.is_file():
         raise FileNotFoundError(f"Local file not found: {path}")
     return path.read_text(encoding="utf-8", errors="replace")
 
 
-async def run(source: str) -> None:
+def execute(action: str, argument: str) -> dict:
+    if action == "start_container":
+        return start_container(argument)
+    if action == "run_container_command":
+        if any(re.search(p, argument) for p in DENYLIST):
+            return {"status": "error", "error_message": f"Blocked by safety policy: {argument}"}
+        return run_container_command(argument)
+    return {"status": "error", "error_message": f"Unknown action: {action}"}
+
+
+def ask_model(messages) -> dict:
+    resp = litellm.completion(
+        model=MODEL, api_base=API_BASE, api_key=API_KEY,
+        messages=messages, temperature=0.2, max_tokens=800,
+        response_format={
+            "type": "json_schema",
+            "json_schema": {"name": "agent_action", "schema": SCHEMA, "strict": True},
+        },
+        extra_body={"chat_template_kwargs": {"enable_thinking": False}},
+    )
+    raw = resp.choices[0].message.content or ""
+    print(f"    [raw model output] {raw[:300]}")
+    # tolerate stray text around the JSON
+    m = re.search(r"\{.*\}", raw, re.S)
+    return json.loads(m.group(0)) if m else {}
+
+
+def run(source: str) -> None:
     try:
-        content = load_document(source)
+        readme = load_document(source)
     except Exception as e:
         print(f"Error loading '{source}': {e}")
         sys.exit(1)
 
-    session_service = InMemorySessionService()
-    await session_service.create_session(
-        app_name=APP_NAME, user_id=USER_ID, session_id=SESSION_ID
-    )
-    runner = Runner(
-        agent=root_agent, app_name=APP_NAME, session_service=session_service
-    )
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content":
+            f"README (source: {source}):\n--- README START ---\n{readme}\n--- README END ---\n\n"
+            f"Choose your first action."},
+    ]
 
-    message = types.Content(
-        role="user",
-        parts=[
-            types.Part(
-                text=(
-                    f"Here is the README (source: {source}). "
-                    f"Execute its instructions using your tools.\n\n"
-                    f"--- README START ---\n{content}\n--- README END ---"
-                )
-            )
-        ],
-    )
+    final = None
+    container_started = False
+    try:
+        for step in range(1, MAX_STEPS + 1):
+            try:
+                decision = ask_model(messages)
+            except Exception as e:
+                print(f"[step {step}] model/JSON error: {e}")
+                messages.append({"role": "user", "content":
+                    'Reply with valid JSON only: {"action": ..., "argument": ...}'})
+                continue
 
-    final_text = None
+            action = decision.get("action", "")
+            argument = str(decision.get("argument", ""))
+            print(f"\n[step {step}] {action}: {argument}")
+            messages.append({"role": "assistant", "content": json.dumps(decision)})
 
-    async for event in runner.run_async(
-        user_id=USER_ID, session_id=SESSION_ID, new_message=message
-    ):
-        print(f"--- event from {event.author} | final={event.is_final_response()}")
+            if action == "finish":
+                final = argument
+                break
 
-        if event.content and event.content.parts:
-            for part in event.content.parts:
-                if part.text:
-                    print(f"[text] {part.text[:500]}")
-                if part.function_call:
-                    print(
-                        f"[tool call] {part.function_call.name}"
-                        f"({part.function_call.args})"
-                    )
-                if part.function_response:
-                    print(
-                        f"[tool result] {str(part.function_response.response)[:500]}"
-                    )
+            if action == "run_container_command" and not container_started:
+                result = {"status": "error",
+                          "error_message": "No container yet. Use start_container first."}
+            else:
+                result = execute(action, argument)
+                if action == "start_container" and result.get("status") == "success":
+                    container_started = True
 
-        if event.is_final_response() and event.content and event.content.parts:
-            final_text = "".join(p.text or "" for p in event.content.parts)
+            print(f"[result] {json.dumps(result)[:800]}")
+            messages.append({"role": "user", "content":
+                f"Result of {action}: {json.dumps(result)}\nChoose your next action."})
+    finally:
+        stop_container()
 
     print("\n=== Final answer ===")
-    print(final_text or "(no final answer)")
+    print(final or "(agent did not finish)")
 
 
 def main() -> None:
     if len(sys.argv) != 2:
         print("Usage: python agent.py <url-or-local-path-to-readme.md>")
         sys.exit(1)
-    asyncio.run(run(sys.argv[1]))
+    run(sys.argv[1])
 
 
 if __name__ == "__main__":
