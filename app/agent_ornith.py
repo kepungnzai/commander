@@ -1,7 +1,5 @@
-# # app/agent.py
 
 # """ Command Execution Agent: read understand and execute command provided in a locally clone README and external HTTPS URL."""
-
 import os
 from dotenv import load_dotenv
 from google.adk.agents import LlmAgent
@@ -10,7 +8,7 @@ from google.adk.tools import google_search
 
 # Create a LiteLLM model pointing to your local server
 model = LiteLlm(
-    model="openai/empero-ai/Qwen3.8-2B-Distill-GGUF",
+    model="openai/ornith-ai/Ornith-1.0-9B-GGUF",
     api_base="http://localhost:8888/v1",  # Your local server
     api_key="sk-unsloth-4d0a1b198bd177a2a72ee1954585342a" ,
     temperature=0.0

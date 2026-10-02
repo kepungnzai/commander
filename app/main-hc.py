@@ -23,7 +23,9 @@ from pydantic import BaseModel, Field
 load_dotenv()
 
 # Reuse the same model your commander agent uses.
-from app.agent import root_agent  
+#from app.agent import root_agent  
+#from app.agent_ornith import root_agent
+from app.agent_spark_x25_4B import root_agent
 
 # ASSUMPTION: plain functions behind your container tools. start_container
 # takes an `image` argument (confirmed by your traceback); the others are
