@@ -12,7 +12,8 @@ from google.adk.tools import google_search
 model = LiteLlm(
     model="openai/empero-ai/Qwen3.8-2B-Distill-GGUF",
     api_base="http://localhost:8888/v1",  # Your local server
-    api_key="sk-unsloth-4d0a1b198bd177a2a72ee1954585342a" 
+    api_key="sk-unsloth-4d0a1b198bd177a2a72ee1954585342a" ,
+    temperature=0.0
 )
 
 from app.prompt import ROOT_AGENT_INSTRUCTION

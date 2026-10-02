@@ -110,7 +110,6 @@ class ReadmeAnalysis(BaseModel):
         description="Shell commands from the README, in the order they should be run."
     )
 
-
 # Dedicated extractor agent: no tools, so ADK can enforce the output schema.
 extractor_agent = LlmAgent(
     name="readme_extractor",
@@ -118,8 +117,8 @@ extractor_agent = LlmAgent(
     model=root_agent.model,
     instruction=(
         "You will receive a README between <start> and </end> tags. "
-        "Read it carefully and do two things:\n"
-        "1. Decide which container image to use, based on the "
+        "Read it carefully from start to finish. And do two things:\n"
+        "1. Decide which runtime use, based on the "
         "install and run commands and any files mentioned (requirements.txt, "
         "package.json, go.mod, Cargo.toml, pom.xml, Gemfile, .csproj, etc.). "
         "Answer with exactly one of: python, node, go, rust, java, ruby, "
@@ -198,6 +197,7 @@ async def analyze_readme(readme_text: str) -> tuple[str, list[str]]:
         if event.is_final_response() and event.content and event.content.parts:
             final_text = "".join(p.text or "" for p in event.content.parts)
 
+    print(final_text)
     return parse_analysis(final_text)
 
 
