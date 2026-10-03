@@ -110,25 +110,29 @@ class ReadmeAnalysis(BaseModel):
         description="Shell commands from the README, in the order they should be run."
     )
 
-
 # Dedicated extractor agent: no tools, so ADK can enforce the output schema.
 extractor_agent = LlmAgent(
     name="readme_extractor",
     description="Reads a README, detects its runtime, and extracts its shell commands.",
     model=root_agent.model,
     instruction=(
-        "You will receive a README between <start> and </end> tags. "
-        "Read it carefully and do two things:\n"
-        "1. Decide which container image to use, based on the "
-        "install and run commands and any files mentioned (requirements.txt, "
-        "package.json, go.mod, Cargo.toml, pom.xml, Gemfile, .csproj, etc.). "
-        "Answer with exactly one of: python, node, go, rust, java, ruby, "
-        "dotnet, shell, unknown.\n"
-        "2. Extract every shell command a user is expected to run, in order "
-        "of appearance. Return only the commands themselves: no prompts like "
-        "'$', no comments, no explanations.\n"
-        "Never execute anything."
-        "3. Return in JSON format in this format: {\"runtime\": \"<runtime>\", \"commands\": [<commands>]}."
+       """You are a classifier. Input is a README between <start> and </end>.
+        STEP 1 - Runtime. Pick exactly one of: python, node, go, rust, java, ruby, dotnet, shell, unknown.
+        Rules, applied in order, first match wins:
+        a. If ANY command invokes a language tool, pick that language:
+            node, npm, npx, yarn, pnpm, bun -> node
+            python, python3, pip, pip3, uv, poetry -> python
+            go -> go; cargo, rustc -> rust; java, mvn, gradle -> java
+            ruby, gem, bundle -> ruby; dotnet -> dotnet
+        b. Otherwise, if files like package.json, requirements.txt, go.mod,
+            Cargo.toml, pom.xml, Gemfile, *.csproj are mentioned, pick the matching language.
+        c. Otherwise, if all commands are plain shell commands (echo, ls, cd, uname, cat, curl, ...), pick shell.
+        d. Otherwise, pick unknown.
+        Generic commands like echo or uname do NOT override rule (a).
+
+        STEP 2 - Commands. List every command in every code block, in order. 
+        No '$', no comments, no explanations. One command per array item.
+        Never execute anything. Output only JSON matching the schema."""
     ),
     output_schema=ReadmeAnalysis,
 )

@@ -129,7 +129,7 @@ extractor_agent = LlmAgent(
         "of appearance. Return only the commands themselves: no prompts like "
         "'$', no comments, no explanations.\n"
         "Never execute anything."
-        "3. Return in JSON format in this format: {\"runtime\": \"<runtime>\", \"commands\": [<commands>]}."
+        "3. Return in the output_schema JSON format"
     ),
     output_schema=ReadmeAnalysis,
 )
